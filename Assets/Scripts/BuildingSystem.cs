@@ -15,6 +15,7 @@ public class BuildingSystem : MonoBehaviour
 
     private bool buildModeOn = false;
     private bool canBuild = false;
+    private bool isBlockAllowed = false;
     private bool destroyModeOn = false;
     private bool canDestroy = false;
     private bool editModeOn = true;
@@ -74,8 +75,6 @@ public class BuildingSystem : MonoBehaviour
         {
             destroyModeOn = false;
             buildModeOn = !buildModeOn;
-            var t = GameObject.FindObjectsOfType<BlockBase>();
-            Debug.Log(t.Length);
         }
 
         if (Input.GetKeyDown("r"))
@@ -101,26 +100,36 @@ public class BuildingSystem : MonoBehaviour
             BlockTypeSelector();
             if (Physics.Raycast(ray, out buildPosHit, Mathf.Infinity, LayerList.cubesLayer))
             {
-                IBlockType blockType = buildPosHit.collider.GetComponent<BlockBase>();
-                
+                BlockBase blockType = buildPosHit.collider.GetComponent<BlockBase>();
                 Vector3 point = buildPosHit.collider.transform.localPosition + plane.transform.InverseTransformVector(buildPosHit.normal);
                 buildQuaternion = buildPosHit.transform.rotation;
                 buildPos = point;
+                if (blockType.CanBePlaced(currentTemplateBlock, buildPosHit.normal))
+                {
+                    isBlockAllowed = true;
+                }
+                else
+                {
+                    isBlockAllowed = false;
+                }
+
                 canBuild = true;
             }
             else if (Physics.Raycast(ray, out buildPosHit, Mathf.Infinity, LayerList.groundLayer) )
             {
                 var local = plane.transform.InverseTransformPoint(buildPosHit.point);
-                Vector3 point = new Vector3(Mathf.Round(local.x), Mathf.Round(local.y), Mathf.Round(local.z)) + buildPosHit.normal * 0.5f;
+                Vector3 point = new Vector3(Mathf.Round(local.x), Mathf.Round(local.y), Mathf.Round(local.z)) + buildPosHit.normal * 1f;
                 buildQuaternion = buildPosHit.transform.rotation;
                 buildPos = point;
                 canBuild = true;
+                isBlockAllowed = true;
             }
             else
             {
                 if(currentTemplateBlock != null)
                     Destroy(currentTemplateBlock);
                 canBuild = false;
+                isBlockAllowed = false;
             }
         }
 
@@ -135,19 +144,22 @@ public class BuildingSystem : MonoBehaviour
             currentTemplateBlock = Instantiate(blockTemplatePrefab, plane.transform);
             var rBody = currentTemplateBlock.GetComponent<Rigidbody>();
             if (rBody != null)
-                currentTemplateBlock.GetComponent<Rigidbody>().Sleep();
+            {
+                rBody.isKinematic = false;
+                rBody.detectCollisions = false;
+            }
+                
             currentTemplateBlock.layer = LayerList.LayerMaskToLayerNumber(LayerList.ignoreRaycastLayer);
             currentTemplateBlock.transform.localPosition = buildPos;
             currentTemplateBlock.GetComponent<MeshRenderer>().material = templateMaterial;
         }
 
+
+
         if (canBuild && currentTemplateBlock != null)
         {
             currentTemplateBlock.transform.localPosition = buildPos;
-//            currentTemplateBlock.transform.rotation = Quaternion.identity;
-//            currentTemplateBlock.transform.localRotation = buildQuaternion;
-
-            ChangeGameObjectRotation(currentTemplateBlock);
+            ChangeGameObjectRotation(currentTemplateBlock.GetComponent<BlockBase>());
 //            currentTemplateBlock.transform.rotation = grid.transform.rotation;
 
             Debug.DrawLine(plane.transform.position + buildPos, plane.transform.position + buildPos + Vector3.up*2, Color.magenta, 0.01f);
@@ -160,7 +172,8 @@ public class BuildingSystem : MonoBehaviour
             }
             if (Input.GetMouseButtonDown(0))
             {
-                PlaceBlock();
+                if(isBlockAllowed)
+                    PlaceBlock();
             }
         }
         DestroySystem();
@@ -173,18 +186,12 @@ public class BuildingSystem : MonoBehaviour
     {
         Block tempBlock = bSys.allBlocks[selectedBlockId];
         GameObject newBlock = Instantiate(tempBlock.prefab, plane.transform);
-        var c = newBlock.GetComponent<Collider>();
-        Debug.Log(c);
         newBlock.layer = LayerList.LayerMaskToLayerNumber(LayerList.cubesLayer);
         newBlock.transform.localPosition = buildPos;
-        
         newBlock.transform.rotation = currentTemplateBlock.transform.rotation;
-        newBlock.name = tempBlock.blockName + "-block";
+        newBlock.name = tempBlock.blockName + "-block-"+ (new System.Random().Next(0, 1000));
+        newBlock.GetComponent<BlockBase>()?.BlockPlaced();
         newBlock.GetComponent<MeshRenderer>().material = tempBlock.blockMaterial;
-
-        {
-            Debug.Log(newBlock.ToString());
-        }
     }
 
     private void BlockTypeSelector()
@@ -203,7 +210,6 @@ public class BuildingSystem : MonoBehaviour
             {
                 if (Input.GetKeyDown(i.ToString()))
                 {
-                    Debug.Log("Set up");
                     selectedBlockId = i - 1;
                     blockTemplatePrefab = allBlocks[i-1].prefab;
                     if (currentTemplateBlock != null)
@@ -334,28 +340,29 @@ public class BuildingSystem : MonoBehaviour
                 temporaryMaterial = null;
             }
 
-            ChangeGameObjectRotation(elementCurrentlySelectedPrefab);
+
+            if(elementCurrentlySelectedPrefab != null)
+                ChangeGameObjectRotation(elementCurrentlySelectedPrefab.GetComponent<BlockBase>());
         }
     }
 
-    void ChangeGameObjectRotation(GameObject obj)
+    void ChangeGameObjectRotation(IBlockType obj)
     {
         if (obj == null) throw new NullReferenceException();
-        if (obj.GetComponent<Cube>() != null) return;
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            obj.transform.Rotate(Vector3.up, -90f, Space.Self);
+            obj.Rotate(Vector3.up, -90f, Space.Self);
         }
 
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            obj.transform.Rotate(Vector3.up, 90f, Space.Self);
+            obj.Rotate(Vector3.up, 90f, Space.Self);
         }
 
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            obj.transform.Rotate(Vector3.right, 180f, Space.Self);
+            obj.Rotate(Vector3.right, 180f, Space.Self);
         }
     }
 }

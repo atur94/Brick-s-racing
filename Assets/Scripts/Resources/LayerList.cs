@@ -10,8 +10,6 @@ public class LayerList : MonoBehaviour
     public static LayerMask groundLayer;
     public LayerMask groundLayerSetter;
 
-
-
     public static LayerMask cubesLayer;
     public LayerMask cubesLayerSetter;
 
@@ -22,10 +20,9 @@ public class LayerList : MonoBehaviour
     {
         groundLayer = groundLayerSetter.value;
         cubesLayer = cubesLayerSetter.value;
-        print(LayerMask.LayerToName(cubesLayer));
 
         ignoreRaycastLayer = ignoreRaycastLayerSetter.value;
-        print(LayerMask.LayerToName(ignoreRaycastLayer));
+
     }
 
     public static int LayerMaskToLayerNumber(int layerMask)
