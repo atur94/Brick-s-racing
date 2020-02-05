@@ -260,12 +260,25 @@ MonoBehaviour:
     blockMat: {fileID: 2100000, guid: d798f9877aeda9345a0385ce740ef461, type: 2}
     prefab: {fileID: 6276663983062675798, guid: bbbcfc6d8fe6f354a83a7593f96f95bb,
       type: 3}
+    overrideMaterial: 1
   - blockName: Triangle
-    blockMat: {fileID: 2100000, guid: 2fe84d86d9395b3498bdd1388557213b, type: 2}
+    blockMat: {fileID: 2100000, guid: d798f9877aeda9345a0385ce740ef461, type: 2}
     prefab: {fileID: 965584113701203699, guid: d5e28de8166509b48ae8f184967572da, type: 3}
+    overrideMaterial: 1
   - blockName: Prism Corner
-    blockMat: {fileID: 2100000, guid: 2fe84d86d9395b3498bdd1388557213b, type: 2}
+    blockMat: {fileID: 2100000, guid: d798f9877aeda9345a0385ce740ef461, type: 2}
     prefab: {fileID: 155804407897440942, guid: 23c3b8437d9eba142b6a3d271459cc8a, type: 3}
+    overrideMaterial: 1
+  - blockName: Wheel handle
+    blockMat: {fileID: 2100000, guid: d798f9877aeda9345a0385ce740ef461, type: 2}
+    prefab: {fileID: 5701570036193506434, guid: d4c82b57d1a4b6e47aaae970d8b33d9d,
+      type: 3}
+    overrideMaterial: 1
+  - blockName: Wheel
+    blockMat: {fileID: 2100000, guid: d798f9877aeda9345a0385ce740ef461, type: 2}
+    prefab: {fileID: 6152615194935813036, guid: 30708c6ac28ff0147973c74843ce693a,
+      type: 3}
+    overrideMaterial: 0
 --- !u!114 &825561435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -287,6 +300,8 @@ MonoBehaviour:
     type: 3}
   templateMaterial: {fileID: 2100000, guid: d798f9877aeda9345a0385ce740ef461, type: 2}
   selectedMaterial: {fileID: 2100000, guid: 61f44e95ab55eae4fb3c0c36ca8f3e1b, type: 2}
+  isNotAllowedMaterial: {fileID: 2100000, guid: 2fe84d86d9395b3498bdd1388557213b,
+    type: 2}
   plane: {fileID: 1893033267}
   selectedBlockId: 0
 --- !u!1 &963194225
@@ -469,7 +484,7 @@ PrefabInstance:
     - target: {fileID: 3787851781221698448, guid: 125f4e954d5953d44b0e7438cec8d7f0,
         type: 3}
       propertyPath: m_RootOrder
-      value: 5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 3787851781221698448, guid: 125f4e954d5953d44b0e7438cec8d7f0,
         type: 3}
@@ -572,7 +587,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1893033267 stripped
 GameObject:

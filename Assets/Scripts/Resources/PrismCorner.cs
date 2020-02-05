@@ -11,7 +11,7 @@ namespace Assets.Scripts.Resources
     {
         protected override void Init()
         {
-            allowedDirections = new Vector3[]
+            allowedPlaceDirections = new Vector3[]
             {
                 Vector3.right,
                 Vector3.forward,

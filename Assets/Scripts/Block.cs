@@ -14,14 +14,16 @@ namespace Assets.Scripts
         public string blockName;
         public Material blockMaterial;
         public GameObject prefab;
+        public bool overrideMaterial;
 
 
-        public Block(int blockId, string blockName, Material blockMaterial, GameObject prefab)
+        public Block(int blockId, string blockName, Material blockMaterial, GameObject prefab, bool overrideMaterial)
         {
             this.blockId = blockId;
             this.blockName = blockName;
             this.blockMaterial = blockMaterial;
             this.prefab = prefab;
+            this.overrideMaterial = overrideMaterial;
         }
     }
 
@@ -31,5 +33,6 @@ namespace Assets.Scripts
         public string blockName;
         public Material blockMat;
         public GameObject prefab;
+        public bool overrideMaterial;
     }
 }

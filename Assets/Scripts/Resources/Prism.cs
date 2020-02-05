@@ -14,7 +14,7 @@ namespace Assets.Scripts.Resources
 //
 //            Debug.Log("Prism creating");
 //
-//            allowedDirections = new Vector3[]
+//            allowedPlaceDirections = new Vector3[]
 //            {
 //                Vector3.left, Vector3.right, Vector3.down, Vector3.forward, Vector3.back, 
 //            };
@@ -23,7 +23,7 @@ namespace Assets.Scripts.Resources
 //        }
         protected override void Init()
         {
-            allowedDirections = new Vector3[]
+            allowedPlaceDirections = new Vector3[]
             {
                 Vector3.down,
                 Vector3.forward,

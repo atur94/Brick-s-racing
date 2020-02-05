@@ -15,7 +15,7 @@ public class BlockSystem : MonoBehaviour
         for (int i = 0; i < allBlockTypes.Length; i++)
         {
             BlockType newBlockType = allBlockTypes[i];
-            Block newBlock = new Block(i, newBlockType.blockName, newBlockType.blockMat, newBlockType.prefab);
+            Block newBlock = new Block(i, newBlockType.blockName, newBlockType.blockMat, newBlockType.prefab, newBlockType.overrideMaterial);
             allBlocks[i] = newBlock;
             print($"Block {allBlocks[i].blockName} added to dictionary ");
         }

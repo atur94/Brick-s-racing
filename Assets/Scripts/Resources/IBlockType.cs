@@ -7,13 +7,12 @@ namespace Assets.Scripts.Resources
     {
         void ToString();
 
-        Vector3[] AllowedDirections();
+        Vector3[] AllowedDirections { get; set; }
         void AddConnectedBlock(GameObject joinedBlock);
         void AddJoinedBlocks(GameObject[] joinedBlocks);
         void Rotate(Vector3 axis, float angle, Space relativeTo);
         void TestForNeighbours();
         void DeleteBlock();
-        void BlockPlaced();
 
     }
 

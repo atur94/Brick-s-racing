@@ -54,6 +54,9 @@ public class BuildingSystem : MonoBehaviour
     [SerializeField]
     private Material selectedMaterial;
 
+    [SerializeField] 
+    private Material isNotAllowedMaterial;
+
     [Header("Helpers")]
 
     [SerializeField]
@@ -69,6 +72,7 @@ public class BuildingSystem : MonoBehaviour
         bSys = GetComponent<BlockSystem>();
     }
 
+    private GameObject parentBlock;
     void Update()
     {
         if (Input.GetKeyDown("e"))
@@ -100,18 +104,36 @@ public class BuildingSystem : MonoBehaviour
             BlockTypeSelector();
             if (Physics.Raycast(ray, out buildPosHit, Mathf.Infinity, LayerList.cubesLayer))
             {
-                BlockBase blockType = buildPosHit.collider.GetComponent<BlockBase>();
+                parentBlock = buildPosHit.collider.gameObject;
                 Vector3 point = buildPosHit.collider.transform.localPosition + plane.transform.InverseTransformVector(buildPosHit.normal);
                 buildQuaternion = buildPosHit.transform.rotation;
                 buildPos = point;
-                if (blockType.CanBePlaced(currentTemplateBlock, buildPosHit.normal))
+                BlockBase currentBlock = null;
+
+                if (currentTemplateBlock != null)
+                {
+                    currentBlock = currentTemplateBlock.GetComponent<BlockBase>();
+                }
+
+                if (currentBlock != null && currentBlock.CanBePlacedChild(buildPosHit.collider.gameObject, buildPosHit.normal))
                 {
                     isBlockAllowed = true;
+
                 }
                 else
                 {
                     isBlockAllowed = false;
+
                 }
+
+//                if (parentBlock.CanBePlacedParent(currentTemplateBlock, buildPosHit.normal))
+//                {
+//                    isBlockAllowed = true;
+//                }
+//                else
+//                {
+//                    isBlockAllowed = false;
+//                }
 
                 canBuild = true;
             }
@@ -123,6 +145,7 @@ public class BuildingSystem : MonoBehaviour
                 buildPos = point;
                 canBuild = true;
                 isBlockAllowed = true;
+                parentBlock = buildPosHit.collider.gameObject;
             }
             else
             {
@@ -130,6 +153,7 @@ public class BuildingSystem : MonoBehaviour
                     Destroy(currentTemplateBlock);
                 canBuild = false;
                 isBlockAllowed = false;
+                parentBlock = null;
             }
         }
 
@@ -170,6 +194,18 @@ public class BuildingSystem : MonoBehaviour
                     Debug.DrawLine(buildPos, new Vector3(buildPos.x + j, buildPos.y, buildPos.z + i), Color.cyan, 0.1f);
                 }
             }
+
+            if (isBlockAllowed == false)
+            { 
+                currentTemplateBlock.GetComponent<MeshRenderer>().material = isNotAllowedMaterial;
+            }
+            else
+            {
+                if(blockTemplatePrefab != null)
+                    currentTemplateBlock.GetComponent<MeshRenderer>().material =
+                        blockTemplatePrefab.GetComponent<MeshRenderer>().sharedMaterial;
+            }
+
             if (Input.GetMouseButtonDown(0))
             {
                 if(isBlockAllowed)
@@ -190,8 +226,9 @@ public class BuildingSystem : MonoBehaviour
         newBlock.transform.localPosition = buildPos;
         newBlock.transform.rotation = currentTemplateBlock.transform.rotation;
         newBlock.name = tempBlock.blockName + "-block-"+ (new System.Random().Next(0, 1000));
-        newBlock.GetComponent<BlockBase>()?.BlockPlaced();
-        newBlock.GetComponent<MeshRenderer>().material = tempBlock.blockMaterial;
+        newBlock.GetComponent<BlockBase>()?.BlockPlaced(parentBlock);
+        if(tempBlock.overrideMaterial)
+            newBlock.GetComponent<MeshRenderer>().material = tempBlock.blockMaterial;
     }
 
     private void BlockTypeSelector()
@@ -342,7 +379,10 @@ public class BuildingSystem : MonoBehaviour
 
 
             if(elementCurrentlySelectedPrefab != null)
+            {
                 ChangeGameObjectRotation(elementCurrentlySelectedPrefab.GetComponent<BlockBase>());
+                Debug.Log(elementCurrentlySelectedPrefab.GetComponent<BlockBase>().transform.rotation);
+            }
         }
     }
 
