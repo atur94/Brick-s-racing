@@ -169,7 +169,7 @@ public class BuildingSystem : MonoBehaviour
             var rBody = currentTemplateBlock.GetComponent<Rigidbody>();
             if (rBody != null)
             {
-                rBody.isKinematic = false;
+                rBody.isKinematic = true;
                 rBody.detectCollisions = false;
             }
                 

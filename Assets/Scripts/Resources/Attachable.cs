@@ -1,4 +1,5 @@
 ﻿using System;
+using Assets.Scripts;
 using Assets.Scripts.Resources;
 using UnityEngine;
 
@@ -25,8 +26,8 @@ public class Attachable : SnappableComponent
         {
             if (vectors.currentObjectNormal != AllowedDirections[0])
             {
-                Debug.Log($"{vectors.parentHitNormal}");
-                var rot = Quaternion.FromToRotation(AllowedDirections[0] * -1, vectors.parentHitNormal * -1);
+                var rot = Quaternion.LookRotation(parent.transform.localRotation * vectors.parentHitNormal * -1);
+//                Debug.Log($"t = {vectors.parentHitNormal} t1 = {parent.transform.localRotation * Vector3.forward} , t2 = {rot}");
                 transform.localRotation = rot;
             }
         }
