@@ -7,7 +7,6 @@ namespace Assets.Scripts.Resources
     public class SnappableComponent : BlockBase
     {
         public bool CanSnapToAll = false;
-        public GameObject[] Attached;
         protected Vector3[] allowedSnapDirections =
         {
             Vector3.down,
@@ -29,19 +28,17 @@ namespace Assets.Scripts.Resources
                 Attached = new GameObject[SnapDirections.Length];
         }
 
-        protected override bool IsNewCompatible(BlockBase parent)
-        {
-//            if (!(parent is SnappableComponent component)) return false;
-            if (parent.ObjectsAllowedToSnap == null) return true;
 
-            for (int i = 0; i < parent.ObjectsAllowedToSnap.Length; i++)
+
+        protected override void OnDeleteBlock()
+        {
+            base.OnDeleteBlock();
+            if (Attached == null || Attached.Length == 0) return;
+            for (int i = 0; i < Attached.Length; i++)
             {
-                var type = GetType();
-                if (type == parent.ObjectsAllowedToSnap[i]) 
-                    return true;
+                if(Attached[i] != null) Destroy(Attached[i]);
             }
 
-            return false;
         }
 
         public override bool CanBePlacedChild(GameObject parent, ref ObjectVectors vectors)
@@ -61,12 +58,15 @@ namespace Assets.Scripts.Resources
             }
 
             if (!IsNewCompatible(parentBlock)) return false;
-            for (int i = 0; i < parentBlock.SnapDirections.Length; i++)
+            if(parentBlock.SnapDirections != null)
             {
-                if (vectors.parentHitNormal == parentBlock.SnapDirections[i])
+                for (int i = 0; i < parentBlock.SnapDirections.Length; i++)
                 {
-                    canBePlacedParent = true;
-                    break;
+                    if (vectors.parentHitNormal == parentBlock.SnapDirections[i])
+                    {
+                        canBePlacedParent = true;
+                        break;
+                    }
                 }
             }
 

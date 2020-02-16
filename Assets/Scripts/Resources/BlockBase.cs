@@ -10,12 +10,50 @@ namespace Assets.Scripts.Resources
         protected GameObject[] connectedBlocks;
 
         public Type[] Compatibility;
-        public Type[] ObjectsAllowedToSnap;
+        public Type[] ObjectsAllowedToSnap =
+        {
+            typeof(SnappableComponent),
+            typeof(BlockBase),
+        };
 
+        public Type[] ObjectsNotAllowedToSnap;
 
+        public GameObject[] Attached;
+
+        public bool HasNeighbour = false;
         protected virtual bool IsNewCompatible(BlockBase parent)
         {
-            return true;
+            if (parent == null) return false;
+            bool isCompatible = false;
+            var type = GetType();
+
+            if (parent.ObjectsAllowedToSnap != null)
+            {
+                for (int i = 0; i < parent.ObjectsAllowedToSnap.Length; i++)
+                {
+                    if (type == parent.ObjectsAllowedToSnap[i] || type.IsSubclassOf(parent.ObjectsAllowedToSnap[i]))
+                    {
+                        isCompatible = true;
+                        break;
+                    }
+
+                }
+            }
+
+            if (parent.ObjectsNotAllowedToSnap != null)
+            {
+                for (int i = 0; i < parent.ObjectsNotAllowedToSnap.Length; i++)
+                {
+                    if (type == parent.ObjectsNotAllowedToSnap[i] || type.IsSubclassOf(parent.ObjectsNotAllowedToSnap[i]))
+                    {
+                        isCompatible = false;
+                        break;
+                    }
+
+                }
+            }
+
+            return isCompatible;
         }
 
         public Vector3[] allowedPlaceDirections =
@@ -32,12 +70,12 @@ namespace Assets.Scripts.Resources
 
         protected uint Health = 100;
 
-        [HideInInspector]
-        public bool isKinematic = false; 
+        private bool isKinematic = true;
 
         private void Awake()
         {
             Init();
+
             connectedBlocks = new GameObject[allowedPlaceDirections.Length];
         }
 
@@ -101,6 +139,7 @@ namespace Assets.Scripts.Resources
             if (joinedBlocks == null) joinedBlocks = new GameObject[6];
         }
 
+        private bool rotated = false;
         public void Rotate(Vector3 axis, float angle, Space relativeTo)
         {
             transform.Rotate(axis, angle, relativeTo);
@@ -109,67 +148,77 @@ namespace Assets.Scripts.Resources
             {
                 rotatedDirections[i] = transform.rotation * allowedPlaceDirections[i];
             }
+            TestForNeighboursChild(gameObject, false);
+            TestForNeighbours();
+            TestForNeighboursChild(gameObject, false);
         }
-
 
         public void DrawRays()
         {
-            foreach (var allowedDirection in allowedPlaceDirections)
+            foreach (var allowedDirection in rotatedDirections)
             {
-                Debug.DrawLine(transform.position, transform.position + allowedDirection*3, Color.yellow, 0.01f);
+                Debug.DrawRay(transform.position, allowedDirection*3, Color.yellow, 0.01f);
+            }
+        }
+
+        public void refreshRotatedVectors()
+        {
+            for (int i = 0; i < allowedPlaceDirections.Length; i++)
+            {
+                rotatedDirections[i] = transform.rotation * allowedPlaceDirections[i];
             }
         }
 
         public void TestForNeighbours()
         {
+            bool addedElement = false;
             connectedBlocks = new GameObject[allowedPlaceDirections.Length];
             int elements = 0;
-            Vector3[] rotatedVectors = new Vector3[allowedPlaceDirections.Length];
+            rotatedDirections = new Vector3[allowedPlaceDirections.Length];
             RaycastHit info;
             Ray ray;
-            for (var index = 0; index < connectedBlocks.Length; index++)
-            {
-                rotatedVectors[index] = transform.rotation * allowedPlaceDirections[index];
-                Debug.DrawRay(transform.position, rotatedVectors[index], Color.magenta, 3f);
-                ray = new Ray(transform.position, rotatedVectors[index]);
 
-                if (Physics.Raycast(ray, out info, 0.55f, LayerList.cubesLayer | LayerList.groundLayer))
+            for (var index = 0; index < rotatedDirections.Length; index++)
+            {
+                rotatedDirections[index] = transform.rotation * allowedPlaceDirections[index];
+
+                Debug.DrawRay(transform.position, rotatedDirections[index]*0.55f, Color.magenta, 3f);
+                ray = new Ray(transform.position, rotatedDirections[index]);
+                if (Physics.Raycast(ray, out info, 1f, LayerList.cubesLayer | LayerList.groundLayer))
                 {
                     var collidingObject = info.collider.gameObject.GetComponent<BlockBase>();
                     if (collidingObject != null)
                     {
+                        Debug.Log(collidingObject.name);
+                        collidingObject.refreshRotatedVectors();
                         for (int i = 0; i < collidingObject.allowedPlaceDirections.Length; i++)
                         {
                             if (collidingObject.rotatedDirections[i] * -1 == rotatedDirections[index])
                             {
                                 connectedBlocks[index] = info.collider.gameObject;
+                                addedElement = true;
                                 elements++;
                                 break;
                             }
                         }
                     }
-                    else
-                    {
-                        connectedBlocks[index] = info.collider.gameObject;
-                        elements++;
-                    }
+
                 }
             }
+
+            HasNeighbour = addedElement;
         }
 
-        
-
-        IEnumerator NeighbourTestCoroutine(GameObject parent)
+        void TestForNeighboursChild(GameObject parent, bool triggerEvent = true)
         {
-            yield return new WaitForFixedUpdate();
             rotatedDirections = new Vector3[allowedPlaceDirections.Length];
             for (int i = 0; i < allowedPlaceDirections.Length; i++)
             {
-                rotatedDirections[i] = transform.localRotation * allowedPlaceDirections[i];
+                rotatedDirections[i] = transform.rotation * allowedPlaceDirections[i];
             }
             for (var i = 0; i < connectedBlocks.Length; i++)
             {
-                
+
                 var connectedGameObject = connectedBlocks[i];
                 if (connectedGameObject == null) continue;
                 BlockBase block = connectedGameObject.GetComponent<BlockBase>();
@@ -179,10 +228,18 @@ namespace Assets.Scripts.Resources
                 }
 
             }
-            OnBlockPlaced(parent);
+            if (triggerEvent)
+                OnBlockPlaced(parent);
+            rotated = false;
         }
 
-        public virtual void OnBlockPlaced(GameObject parent)
+        IEnumerator NeighbourTestCoroutine(GameObject parent)
+        {
+            yield return new WaitForFixedUpdate();
+            TestForNeighboursChild(parent);
+        }
+
+        protected virtual void OnBlockPlaced(GameObject parent)
         {
 
         }
@@ -196,7 +253,7 @@ namespace Assets.Scripts.Resources
             }
             TestForNeighbours();
             StartCoroutine(NeighbourTestCoroutine(parent));
-
+//            OnBlockPlaced(parent);
 
         }
 
@@ -221,10 +278,15 @@ namespace Assets.Scripts.Resources
             BlockBase parentBlock = parent.GetComponent<BlockBase>();
             if (parentBlock == null) return false;
             if (!IsNewCompatible(parentBlock)) return false;
-
-            for (int i = 0; i < parentBlock.allowedPlaceDirections.Length; i++)
+            Vector3[] parentDirections = parentBlock.allowedPlaceDirections;
+            if (parentBlock is SnappableComponent snappableParent)
             {
-                if (vectors.parentHitNormal == parentBlock.allowedPlaceDirections[i])
+                parentDirections = snappableParent.SnapDirections;
+            }
+
+            for (int i = 0; i < parentDirections.Length; i++)
+            {
+                if (vectors.parentHitNormal == parentDirections[i])
                 {
                     canBePlacedParent = true;
                     break;
@@ -293,7 +355,22 @@ namespace Assets.Scripts.Resources
 
         public void DeleteBlock()
         {
-            
+            OnDeleteBlock();
+            Destroy(gameObject);
+        }
+
+        protected virtual void OnDeleteBlock() { }
+        public virtual void AddAttached(Attachable attachable)
+        {
+            if (attachable == null && Attached == null) return;
+            for (int i = 0; i < Attached.Length; i++)
+            {
+                if (Attached[i] == null)
+                {
+                    Attached[i] = attachable.gameObject;
+                    return;
+                }
+            }
         }
     }
     public struct ObjectVectors

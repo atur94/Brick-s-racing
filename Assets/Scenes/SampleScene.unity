@@ -275,8 +275,13 @@ MonoBehaviour:
       type: 3}
     overrideMaterial: 1
   - blockName: Wheel
-    blockMat: {fileID: 2100000, guid: d798f9877aeda9345a0385ce740ef461, type: 2}
+    blockMat: {fileID: 0}
     prefab: {fileID: 6152615194935813036, guid: 30708c6ac28ff0147973c74843ce693a,
+      type: 3}
+    overrideMaterial: 0
+  - blockName: CPU
+    blockMat: {fileID: 0}
+    prefab: {fileID: 9216407071386237108, guid: 3cf3a0c4ea836b04aa5c62d93f686d20,
       type: 3}
     overrideMaterial: 0
 --- !u!114 &825561435
@@ -292,7 +297,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 963194227}
-  elementCurrentlySelectedPrefab: {fileID: 0}
+  selectedObject: {fileID: 0}
   blockTemplatePrefab: {fileID: 0}
   destroyTemplatePrefab: {fileID: 8661467513906602717, guid: 574d4603a00c24a4b94d28ab72929690,
     type: 3}

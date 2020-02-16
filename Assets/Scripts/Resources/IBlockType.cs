@@ -11,7 +11,6 @@ namespace Assets.Scripts.Resources
         void AddConnectedBlock(GameObject joinedBlock);
         void AddJoinedBlocks(GameObject[] joinedBlocks);
         void Rotate(Vector3 axis, float angle, Space relativeTo);
-        void TestForNeighbours();
         void DeleteBlock();
 
     }

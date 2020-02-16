@@ -23,10 +23,7 @@ public class WheelHandle : SnappableComponent
 
         ObjectsAllowedToSnap = new Type[]{typeof(Wheel)};
 
-        Compatibility = new Type[]
-        {
-            typeof(WheelHandle)
-        };
+        base.Init();
     }
 
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Resources;
 using UnityEngine;
 
 namespace Assets.Scripts.Resources
@@ -16,6 +17,10 @@ namespace Assets.Scripts.Resources
                 Vector3.right,
                 Vector3.forward,
                 Vector3.down
+            };
+            ObjectsNotAllowedToSnap = new Type[]
+            {
+                typeof(Computer)
             };
         }
     }

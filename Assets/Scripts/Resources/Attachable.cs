@@ -8,9 +8,27 @@ public class Attachable : SnappableComponent
 {
     public GameObject AttachedTo;
 
-    public override void OnBlockPlaced(GameObject parent)
+    protected override void OnBlockPlaced(GameObject parent)
     {
-        AttachedTo = parent;
+        BlockBase parentComponent = parent.GetComponent<BlockBase>();
+        if(parentComponent != null)
+        {
+            parentComponent.AddAttached(this);
+            AttachedTo = parent;
+        }
+    }
+
+    public override void AddAttached(Attachable attachable)
+    {
+        if (attachable == null && Attached == null) return;
+        for (int i = 0; i < Attached.Length; i++)
+        {
+            if (Attached[i] == null)
+            {
+                Attached[i] = attachable.gameObject;
+                return;
+            }
+        }
     }
 
     public override bool CanBePlacedChild(GameObject parent, ref ObjectVectors vectors)
@@ -19,18 +37,20 @@ public class Attachable : SnappableComponent
         RotateTowards(parent, ref vectors);
         return canBePlaced;
     }
-
-    private void RotateTowards(GameObject parent , ref ObjectVectors vectors)
+    public Vector3 FacingDirection = Vector3.down;
+    public virtual void RotateTowards(GameObject parent , ref ObjectVectors vectors)
     {
         if (AllowedDirections != null && AllowedDirections.Length == 1)
         {
             if (vectors.currentObjectNormal != AllowedDirections[0])
             {
-                var rot = Quaternion.LookRotation(parent.transform.localRotation * vectors.parentHitNormal * -1);
-//                Debug.Log($"t = {vectors.parentHitNormal} t1 = {parent.transform.localRotation * Vector3.forward} , t2 = {rot}");
-                transform.localRotation = rot;
+                // This ensures that A's down points at B's position
+                Quaternion rotationOffset = Quaternion.AngleAxis(90.0f, Vector3.right);
+                // Point straight towards B with secondary emphasis on the root's forward vector
+                // Then, apply offset to align the downward axis instead
+                transform.localRotation = Quaternion.LookRotation(transform.localPosition - parent.transform.localPosition, FacingDirection) * rotationOffset;
             }
         }
-
     }
+
 }

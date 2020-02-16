@@ -5,6 +5,7 @@ using Assets.Scripts;
 using Assets.Scripts.Resources;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
@@ -33,8 +34,8 @@ public class BuildingSystem : MonoBehaviour
     private GameObject currentTemplateBlock;
     private GameObject destroyTemplateBlock;
     private GameObject blockToDestroy;
-    [SerializeField]
-    private GameObject elementCurrentlySelectedPrefab;
+    [FormerlySerializedAs("elementCurrentlySelectedPrefab")] [SerializeField]
+    private GameObject selectedObject;
 
     [Header("Prefabs")]
     [SerializeField]
@@ -66,11 +67,14 @@ public class BuildingSystem : MonoBehaviour
     private int selectedBlockId = 0;
 
     private Material temporaryMaterial;
+    
 
     void Start()
     {
         bSys = GetComponent<BlockSystem>();
     }
+
+    private Dictionary<BlockBase, int> test;
 
     private GameObject parentBlock;
     void Update()
@@ -105,14 +109,36 @@ public class BuildingSystem : MonoBehaviour
             if (Physics.Raycast(ray, out buildPosHit, Mathf.Infinity, LayerList.cubesLayer))
             {
                 parentBlock = buildPosHit.collider.gameObject;
-                Vector3 point = buildPosHit.collider.transform.localPosition + plane.transform.InverseTransformVector(buildPosHit.normal);
+                Vector3 point = buildPosHit.collider.transform.localPosition;
                 buildQuaternion = buildPosHit.transform.rotation;
-                buildPos = point;
                 BlockBase currentBlock = null;
 
                 if (currentTemplateBlock != null)
                 {
-                    currentBlock = currentTemplateBlock.GetComponent<BlockBase>();
+                    BoxCollider currentBoxCollider = currentTemplateBlock.GetComponent<BoxCollider>();
+                    currentBlock = currentTemplateBlock.gameObject.GetComponent<BlockBase>();
+                    if (currentBoxCollider != null)
+                    {
+                        var v = plane.transform.InverseTransformVector(buildPosHit.normal);
+                        
+                        var normalColliderRotation = Quaternion.FromToRotation(Vector3.up, new Vector3(Math.Abs(v.x), Math.Abs(v.y), Math.Abs(v.z)));
+                        var t = normalColliderRotation * (currentBoxCollider.size + currentBoxCollider.center);
+                        Debug.Log($"1 = {Vector3.Scale(t,v)} 2 = {v}");
+
+                        point += 0.5f*v + 0.5f * Vector3.Scale(normalColliderRotation *
+                                                            (currentBoxCollider.size + currentBoxCollider.center), v);
+                    }
+                    else
+                    {
+                        point += plane.transform.InverseTransformVector(buildPosHit.normal);
+                    }
+                    //                    point += Vector3.Scale(plane.transform.InverseTransformVector(buildPosHit.normal)*0.5f, currentTemplateBlock.GetComponent<Collider>().bounds.size * 0.5f);
+                    //                    point += 0.5f * plane.transform.InverseTransformVector(buildPosHit.normal);
+
+
+                }
+                else
+                {
                 }
 
                 if (currentBlock != null && currentBlock.CanBePlacedChild(buildPosHit.collider.gameObject, buildPosHit.normal))
@@ -125,16 +151,7 @@ public class BuildingSystem : MonoBehaviour
                     isBlockAllowed = false;
 
                 }
-
-//                if (parentBlock.CanBePlacedParent(currentTemplateBlock, buildPosHit.normal))
-//                {
-//                    isBlockAllowed = true;
-//                }
-//                else
-//                {
-//                    isBlockAllowed = false;
-//                }
-
+                buildPos = point;
                 canBuild = true;
             }
             else if (Physics.Raycast(ray, out buildPosHit, Mathf.Infinity, LayerList.groundLayer) )
@@ -142,6 +159,7 @@ public class BuildingSystem : MonoBehaviour
                 var local = plane.transform.InverseTransformPoint(buildPosHit.point);
                 Vector3 point = new Vector3(Mathf.Round(local.x), Mathf.Round(local.y), Mathf.Round(local.z)) + buildPosHit.normal * 1f;
                 buildQuaternion = buildPosHit.transform.rotation;
+
                 buildPos = point;
                 canBuild = true;
                 isBlockAllowed = true;
@@ -169,8 +187,8 @@ public class BuildingSystem : MonoBehaviour
             var rBody = currentTemplateBlock.GetComponent<Rigidbody>();
             if (rBody != null)
             {
-                rBody.isKinematic = true;
-                rBody.detectCollisions = false;
+//                rBody.isKinematic = true;
+//                rBody.detectCollisions = false;
             }
                 
             currentTemplateBlock.layer = LayerList.LayerMaskToLayerNumber(LayerList.ignoreRaycastLayer);
@@ -186,7 +204,8 @@ public class BuildingSystem : MonoBehaviour
             ChangeGameObjectRotation(currentTemplateBlock.GetComponent<BlockBase>());
 //            currentTemplateBlock.transform.rotation = grid.transform.rotation;
 
-            Debug.DrawLine(plane.transform.position + buildPos, plane.transform.position + buildPos + Vector3.up*2, Color.magenta, 0.01f);
+//            Debug.DrawLine(plane.transform.position + buildPos, plane.transform.position + buildPos + Vector3.up*2, Color.magenta, 0.01f);
+            
             for (int i = -1; i <= 1; i++)
             {
                 for (int j = -1; j <= 1; j++)
@@ -258,10 +277,15 @@ public class BuildingSystem : MonoBehaviour
         }
     }
 
-    private void DeleteBlock()
+    private void DeleteBlock(GameObject blockToDestroy)
     {
         if(blockToDestroy != null)
-            Destroy(blockToDestroy);
+        {
+            var block = blockToDestroy.GetComponent<BlockBase>();
+            if(block != null) block.DeleteBlock();
+            else
+                Destroy(blockToDestroy);
+        }
     }
 
     private void DestroySystem()
@@ -317,7 +341,7 @@ public class BuildingSystem : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            DeleteBlock();
+            DeleteBlock(blockToDestroy);
         }
     }
 
@@ -333,26 +357,26 @@ public class BuildingSystem : MonoBehaviour
                 if (Physics.Raycast(ray, out selectPosHit, Mathf.Infinity, LayerList.cubesLayer))
                 {
 
-                    if (elementCurrentlySelectedPrefab != null && temporaryMaterial != null)
+                    if (selectedObject != null && temporaryMaterial != null)
                     {
-                        elementCurrentlySelectedPrefab.GetComponent<MeshRenderer>().material = temporaryMaterial;
+                        selectedObject.GetComponent<MeshRenderer>().material = temporaryMaterial;
                         temporaryMaterial = null;
-                        elementCurrentlySelectedPrefab = null;
+                        selectedObject = null;
                     }
 
-                    elementCurrentlySelectedPrefab = selectPosHit.collider.gameObject;
-                    elementCurrentlySelectedPrefab.GetComponent<BlockBase>().ToString();
-                    temporaryMaterial = elementCurrentlySelectedPrefab.GetComponent<MeshRenderer>().material;
-                    elementCurrentlySelectedPrefab.GetComponent<MeshRenderer>().material = selectedMaterial;
+                    selectedObject = selectPosHit.collider.gameObject;
+                    selectedObject.GetComponent<BlockBase>().ToString();
+                    temporaryMaterial = selectedObject.GetComponent<MeshRenderer>().material;
+                    selectedObject.GetComponent<MeshRenderer>().material = selectedMaterial;
                     
                 }
                 else
                 {
-                    if (elementCurrentlySelectedPrefab != null )
+                    if (selectedObject != null )
                     {
-                        elementCurrentlySelectedPrefab.GetComponent<MeshRenderer>().material = temporaryMaterial;
+                        selectedObject.GetComponent<MeshRenderer>().material = temporaryMaterial;
                         temporaryMaterial = null;
-                        elementCurrentlySelectedPrefab = null;
+                        selectedObject = null;
                     }
                 }
 
@@ -361,34 +385,33 @@ public class BuildingSystem : MonoBehaviour
 
         
 
-        if (!editModeOn && elementCurrentlySelectedPrefab != null )
+        if (!editModeOn && selectedObject != null )
         {
-            elementCurrentlySelectedPrefab.GetComponent<MeshRenderer>().material = temporaryMaterial;
-            elementCurrentlySelectedPrefab = null;
+            selectedObject.GetComponent<MeshRenderer>().material = temporaryMaterial;
+            selectedObject = null;
             temporaryMaterial = null;
         }
 
-        if (editModeOn && elementCurrentlySelectedPrefab != null)
+        if (editModeOn && selectedObject != null)
         {
             if (Input.GetKeyDown("x"))
             {
-                Destroy(elementCurrentlySelectedPrefab);
-                elementCurrentlySelectedPrefab = null;
+                DeleteBlock(selectedObject);
+                selectedObject = null;
                 temporaryMaterial = null;
             }
 
 
-            if(elementCurrentlySelectedPrefab != null)
+            if(selectedObject != null)
             {
-                ChangeGameObjectRotation(elementCurrentlySelectedPrefab.GetComponent<BlockBase>());
-                Debug.Log(elementCurrentlySelectedPrefab.GetComponent<BlockBase>().transform.rotation);
+                ChangeGameObjectRotation(selectedObject.GetComponent<BlockBase>());
             }
         }
     }
 
     void ChangeGameObjectRotation(IBlockType obj)
     {
-        if (obj == null) throw new NullReferenceException();
+        if (obj == null) return;
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {

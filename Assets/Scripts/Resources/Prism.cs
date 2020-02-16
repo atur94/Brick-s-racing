@@ -9,18 +9,6 @@ namespace Assets.Scripts.Resources
 {
     public class Prism : BlockBase
     {
-//        Prism()
-//        {
-//
-//            Debug.Log("Prism creating");
-//
-//            allowedPlaceDirections = new Vector3[]
-//            {
-//                Vector3.left, Vector3.right, Vector3.down, Vector3.forward, Vector3.back, 
-//            };
-//
-//            Debug.Log("Prism created");
-//        }
         protected override void Init()
         {
             allowedPlaceDirections = new Vector3[]
